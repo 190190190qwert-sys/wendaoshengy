@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#111827"><title>问道·长生</title>
+<style>
+:root{--bg:#101827;--panel:#1b2940;--gold:#e8c77b;--ink:#e8edf5;--muted:#9aabc2;--red:#d86d6d;--green:#79c99a}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0d1522,#1c2a3c);color:var(--ink);font-family:system-ui,"Noto Sans SC",sans-serif;touch-action:manipulation}
+header{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#0b1220;border-bottom:1px solid #39465a}
+h1{font-size:18px;color:var(--gold);margin:0;letter-spacing:2px}.top{font-size:12px;color:var(--muted)}
+main{max-width:900px;margin:auto;padding:10px;display:grid;grid-template-columns:1fr;gap:10px}
+.panel{background:linear-gradient(145deg,#1c2b42,#172337);border:1px solid #3c4b61;border-radius:12px;padding:11px;box-shadow:0 5px 18px #0004}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.stat{background:#101a2a;padding:7px;border-radius:8px;text-align:center;font-size:12px}.stat b{display:block;color:var(--gold);font-size:15px}
+.bar{height:7px;background:#0b1320;border-radius:8px;overflow:hidden;margin-top:4px}.fill{height:100%;background:linear-gradient(90deg,#a34d54,#e28a7b)}
+nav{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}.tab,button{border:1px solid #53627a;background:#263750;color:var(--ink);padding:9px 5px;border-radius:8px;font-size:13px}button:active,.tab.active{background:#745d36;border-color:var(--gold);color:#fff}
+h2{font-size:15px;color:var(--gold);margin:0 0 9px}.muted{color:var(--muted);font-size:12px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0}.actions{display:flex;flex-wrap:wrap;gap:6px}.actions button{flex:1;min-width:78px}
+#world{width:100%;height:auto;aspect-ratio:16/10;background:#132b35;border-radius:9px;border:1px solid #52677a;display:block;image-rendering:pixelated}
+.log{height:100px;overflow:auto;background:#0b1422;border-radius:8px;padding:8px;font-size:12px;color:#c4d0df;line-height:1.6}
+.item{padding:8px;background:#101a2a;border-radius:8px;margin:5px 0;font-size:13px}.hidden{display:none}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#pad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,42px);gap:4px;justify-content:center;margin:8px}#pad button{padding:0;font-size:18px}
+footer{text-align:center;color:#73849b;font-size:11px;padding:8px}
+@media(min-width:700px){main{grid-template-columns:1.1fr .9fr}.wide{grid-column:1/-1}}
+</style></head>
+<body>
+<header><h1>问道·长生</h1><div class="top" id="realm">炼气一层 · 初入仙途</div></header>
+<main>
+<section class="panel wide">
+ <div class="row"><div><b id="heroName">无名散修</b><div class="muted" id="heroTitle">青云山外门弟子</div></div><div class="muted">灵石 <b id="stones">30</b> · 修为 <b id="xp">0</b></div></div>
+ <div class="stats">
+  <div class="stat">生命<b id="hp">100/100</b><div class="bar"><div class="fill" id="hpbar" style="width:100%"></div></div></div>
+  <div class="stat">灵力<b id="mp">40/40</b><div class="bar"><div class="fill" id="mpbar" style="width:100%;background:#5c9ed1"></div></div></div>
+  <div class="stat">攻击<b id="atk">12</b></div><div class="stat">防御<b id="def">5</b></div>
+ </div>
+</section>
+<section class="panel wide"><nav>
+ <button class="tab active" data-tab="world">世界</button><button class="tab" data-tab="character">角色</button><button class="tab" data-tab="bag">背包</button><button class="tab" data-tab="quests">任务</button><button class="tab" data-tab="admin">管理</button>
+</nav></section>
+<section class="panel" id="world">
+ <h2>山河舆图</h2><canvas id="map" width="640" height="400"></canvas>
+ <div id="pad"><span></span><button data-move="0,-1">▲</button><span></span><button data-move="-1,0">◀</button><button data-move="0,1">▼</button><button data-move="1,0">▶</button></div>
+ <div class="actions"><button id="explore">探索周围</button><button id="meditate">打坐修炼</button><button id="save">保存进度</button></div>
+ <p class="muted">使用方向键移动。靠近灵兽可触发战斗，靠近青云宗可接取任务。</p>
+</section>
+<section class="panel" id="character" hidden><h2>角色与功法</h2><div id="charinfo"></div><div class="item">基础功法：引气诀 <span class="muted">（被动：修炼收益 +2）</span></div><div id="skills"></div></section>
+<section class="panel" id="bag" hidden><h2>储物袋 / 装备</h2><div id="inventory"></div><h2 style="margin-top:12px">装备栏</h2><div id="equipment"></div></section>
+<section class="panel" id="quests" hidden><h2>宗门任务</h2><div id="questlist"></div><div class="actions"><button id="acceptQuest">接取当前任务</button><button id="turnQuest">提交任务</button></div></section>
+<section class="panel" id="admin" hidden><h2>管理员控制台</h2><p class="muted">本地单机游戏管理面板。默认口令：dao2026。可在下方修改口令。此权限仅控制游戏数据，不是安卓系统管理员/root 权限。</p>
+ <div class="row"><input id="adminPass" type="password" placeholder="管理员口令" style="min-width:0;flex:1;padding:9px;border-radius:7px"><button id="unlock">解锁</button></div>
+ <div id="adminTools" class="hidden">
+ <div class="grid2"><label class="muted">增加灵石<input id="addStones" type="number" value="100" style="width:100%;padding:8px"></label><label class="muted">增加修为<input id="addXp" type="number" value="100" style="width:100%;padding:8px"></label></div>
+ <div class="actions"><button id="grant">应用资源</button><button id="heal">恢复生命灵力</button><button id="levelup">提升境界</button></div>
+ <div class="item"><label class="muted">修改玩家名称<input id="rename" placeholder="输入新名称" style="width:100%;padding:8px"></label></div>
+ <div class="item"><label class="muted">新管理员口令<input id="newPass" placeholder="新口令" style="width:100%;padding:8px"></label><button id="changePass">修改口令</button></div>
+ <div class="actions"><button id="reset">重置游戏</button><button id="export">导出存档</button><button id="import">导入存档</button></div>
+ </div>
+</section>
+<section class="panel"><h2 id="sceneTitle">青云山麓</h2><p id="sceneText">云雾自群峰间升起。你刚刚踏入修仙之路，前方的古道通向青云宗。</p><div class="actions"><button id="talk">与此地人物交谈</button><button id="battle">挑战附近灵兽</button></div></section>
+<section class="panel"><h2>战斗状态</h2><div class="row"><b id="enemyName">暂无敌人</b><span class="muted" id="enemyHp"></span></div><div class="actions"><button id="attack">普通攻击</button><button id="cast">施展火弹术（8灵力）</button><button id="flee">撤退</button></div><div class="muted" id="battleHint">探索世界以寻找对手。</div></section>
+<section class="panel"><h2>修仙纪事</h2><div class="log" id="log"></div></section>
+</main><footer>问道·长生 · 离线单机原型 · 自动本地存档</footer>
+<script>
+const $=id=>document.getElementById(id);
+const defaultState=()=>({name:"无名散修",level:1,xp:0,stones:30,hp:100,maxHp:100,mp:40,maxMp:40,atk:12,def:5,x:2,y:3,inventory:[{name:"凝气丹",qty:2,type:"potion"},{name:"粗布护腕",qty:1,type:"gear",atk:1,def:2}],weapon:null,armor:null,quest:0,questDone:false,kills:0,adminPass:"dao2026",enemy:null,scene:"青云山麓"});
+let s=load();function load(){try{return {...defaultState(),...JSON.parse(localStorage.getItem("xiuxian_save")||"{}")}}catch(e){return defaultState()}}
+function save(silent=false){localStorage.setItem("xiuxian_save",JSON.stringify(s));if(!silent)log("存档已写入本机浏览器。")}
+function log(t){let el=$("log");el.innerHTML+="<div>› "+esc(t)+"</div>";el.scrollTop=el.scrollHeight}
+function esc(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+const places=[{x:2,y:3,n:"青云山麓",t:"云雾自群峰间升起。你刚刚踏入修仙之路，前方的古道通向青云宗。"},{x:5,y:2,n:"青云宗",t:"山门巍峨，钟声悠远。执事弟子正在发布除妖任务。"},{x:7,y:5,n:"落霞林",t:"林间灵气浓郁，却有妖兽留下的爪痕。"},{x:1,y:7,n:"寒潭",t:"潭水幽寒，水底似有灵光闪烁。"},{x:8,y:1,n:"断剑崖",t:"崖边插着半截古剑，石壁上刻着残缺剑诀。"}];
+const monsters=[{name:"山野灰狼",hp:32,atk:7,xp:12,stone:5},{name:"青纹妖蛇",hp:48,atk:10,xp:20,stone:9},{name:"赤焰猿",hp:68,atk:13,xp:30,stone:15}];
+function realm(){return ["炼气","筑基","金丹","元婴","化神","炼虚","合体","大乘","渡劫"][Math.min(8,Math.floor((s.level-1)/3))]+" "+(["一层","二层","三层"][((s.level-1)%3)])}
+function render(){
+ $("heroName").textContent=s.name;$("realm").textContent=realm()+" · 修行中";$("heroTitle").textContent="青云宗外门弟子";
+ $("stones").textContent=s.stones;$("xp").textContent=s.xp;$("hp").textContent=s.hp+"/"+s.maxHp;$("mp").textContent=s.mp+"/"+s.maxMp;
+ $("hpbar").style.width=(100*s.hp/s.maxHp)+"%";$("mpbar").style.width=(100*s.mp/s.maxMp)+"%";
+ $("atk").textContent=s.atk+(s.weapon?.atk||0);$("def").textContent=s.def+(s.armor?.def||0);
+ $("sceneTitle").textContent=s.scene;$("sceneText").textContent=(places.find(p=>p.n===s.scene)||places[0]).t;
+ $("enemyName").textContent=s.enemy?s.enemy.name:"暂无敌人";$("enemyHp").textContent=s.enemy?s.enemy.hp+" HP":"";
+ $("battleHint").textContent=s.enemy?"战斗进行中：攻击、施法或撤退。":"探索地图寻找灵兽。";
+ $("charinfo").innerHTML=`<div class="item">境界：${realm()}<br>等级：${s.level}<br>修为：${s.xp}/${s.level*35}<br>击败灵兽：${s.kills}</div><div class="item">攻击：${s.atk+(s.weapon?.atk||0)}　防御：${s.def+(s.armor?.def||0)}<br>生命：${s.hp}/${s.maxHp}　灵力：${s.mp}/${s.maxMp}</div>`;
+ $("skills").innerHTML='<div class="item">火弹术：消耗 8 灵力，造成攻击力 × 1.8 的伤害。</div><div class="item">吐纳术：在世界页面打坐，恢复灵力并获得修为。</div>';
+ $("inventory").innerHTML=s.inventory.length?s.inventory.map((it,i)=>`<div class="item">${esc(it.name)} ×${it.qty} <button onclick="useItem(${i})">使用 / 装备</button></div>`).join(""):"<div class=item>储物袋空空如也</div>";
+ $("equipment").innerHTML=`<div class=item>武器：${s.weapon?esc(s.weapon.name):"未装备"}</div><div class=item>护具：${s.armor?esc(s.armor.name):"未装备"}</div>`;
+ $("questlist").innerHTML=`<div class=item><b>清剿山狼</b><br>前往落霞林击败 2 只灵兽。<br>进度：${s.kills}/2<br>奖励：50 灵石、30 修为。<br>状态：${s.questDone?"已完成":s.quest?"进行中":"未接取"}</div>`;
+ draw();save(true)
+}
+function draw(){let c=$("map"),ctx=c.getContext("2d");ctx.clearRect(0,0,640,400);ctx.fillStyle="#1b3b3b";ctx.fillRect(0,0,640,400);
+ for(let y=0;y<10;y++)for(let x=0;x<10;x++){ctx.fillStyle=((x+y)%2)?"#254b43":"#2c5548";ctx.fillRect(x*64,y*40,63,39);if((x*7+y*3)%9===0){ctx.fillStyle="#416b50";ctx.beginPath();ctx.arc(x*64+32,y*40+20,9,0,7);ctx.fill()}}
+ places.forEach(p=>{ctx.fillStyle="#e5c77e";ctx.font="18px sans-serif";ctx.fillText("✦",p.x*64+23,p.y*40+25);ctx.fillStyle="#f3e7c4";ctx.font="12px sans-serif";ctx.fillText(p.n,p.x*64+3,p.y*40+37)});
+ ctx.fillStyle="#e77e75";ctx.beginPath();ctx.arc(s.x*64+32,s.y*40+20,11,0,7);ctx.fill();ctx.fillStyle="#fff";ctx.font="12px sans-serif";ctx.fillText("你",s.x*64+26,s.y*40+24)}
+function move(dx,dy){if(s.enemy){log("战斗中无法移动。");return} s.x=Math.max(0,Math.min(9,s.x+dx));s.y=Math.max(0,Math.min(9,s.y+dy));let p=places.find(p=>p.x===s.x&&p.y===s.y);if(p){s.scene=p.n;log("你抵达："+p.n)}else if(Math.random()<.2)spawn();render()}
+function spawn(){let m=monsters[Math.floor(Math.random()*monsters.length)];s.enemy={...m};log("一只"+m.name+"从林间窜出！")}
+function startBattle(){if(!s.enemy)spawn();render()}
+function enemyTurn(){if(!s.enemy)return;let d=Math.max(1,s.enemy.atk-(s.def+(s.armor?.def||0)));s.hp=Math.max(0,s.hp-d);log(s.enemy.name+"反击，造成 "+d+" 点伤害。");if(!s.hp){s.hp=1;log("你重伤倒地，被传送回青云山麓并恢复少量生命。");s.scene="青云山麓";s.x=2;s.y=3;s.hp=Math.ceil(s.maxHp*.25);s.enemy=null}}
+function win(){let e=s.enemy;s.xp+=e.xp;s.stones+=e.stone;s.kills++;log("击败"+e.name+"，获得 "+e.xp+" 修为、"+e.stone+" 灵石。");s.enemy=null;while(s.xp>=s.level*35){s.xp-=s.level*35;s.level++;s.maxHp+=12;s.maxMp+=5;s.atk+=2;s.def+=1;s.hp=s.maxHp;s.mp=s.maxMp;log("突破成功！当前等级："+s.level+"，境界："+realm())}}
+function attack(){if(!s.enemy){log("附近没有敌人。");return}let d=Math.max(1,s.atk+(s.weapon?.atk||0)-Math.floor(Math.random()*3));s.enemy.hp-=d;log("你挥出一击，造成 "+d+" 点伤害。");if(s.enemy.hp<=0)win();else enemyTurn();render()}
+function cast(){if(!s.enemy||s.mp<8){log("没有敌人或灵力不足。");return}s.mp-=8;let d=Math.floor((s.atk+(s.weapon?.atk||0))*1.8);s.enemy.hp-=d;log("火弹术命中，造成 "+d+" 点伤害。");if(s.enemy.hp<=0)win();else enemyTurn();render()}
+function useItem(i){let it=s.inventory[i];if(!it)return;if(it.type==="potion"){s.hp=Math.min(s.maxHp,s.hp+45);s.mp=Math.min(s.maxMp,s.mp+15);it.qty--;log("服下凝气丹，恢复生命与灵力。");if(!it.qty)s.inventory.splice(i,1)}else{if(it.atk){s.weapon=it;s.atk+=it.atk;it.qty--;log("装备"+it.name)}else{s.armor=it;s.def+=it.def||0;it.qty--;log("装备"+it.name)}if(!it.qty)s.inventory.splice(i,1)}render()}
+function meditate(){let gain=10+s.level*2;s.xp+=gain;s.mp=Math.min(s.maxMp,s.mp+12);s.hp=Math.min(s.maxHp,s.hp+8);log("吐纳天地灵气，获得 "+gain+" 修为。");while(s.xp>=s.level*35){s.xp-=s.level*35;s.level++;s.maxHp+=12;s.maxMp+=5;s.atk+=2;s.def++;s.hp=s.maxHp;s.mp=s.maxMp;log("境界提升！")}render()}
+$("explore").onclick=()=>{if(Math.random()<.65)spawn();else log("你搜寻一番，只找到几株普通灵草。");render()};
+$("meditate").onclick=meditate;$("save").onclick=()=>save();
+document.querySelectorAll("[data-move]").forEach(b=>b.onclick=()=>move(...b.dataset.move.split(",").map(Number)));
+$("attack").onclick=attack;$("cast").onclick=cast;$("flee").onclick=()=>{if(s.enemy){s.enemy=null;log("你脱离战斗。")}render()};$("battle").onclick=startBattle;
+$("talk").onclick=()=>{if(s.scene==="青云宗"){log("执事：近来落霞林妖兽扰民，若能清剿两只，宗门必有赏赐。")}else if(s.scene==="断剑崖"){log("石壁残诀：剑意不在招式，而在心中。")}else log("四周寂静，只有风声与草木摇曳。")};
+$("acceptQuest").onclick=()=>{s.quest=1;log("接取任务：清剿山狼。");render()};
+$("turnQuest").onclick=()=>{if(s.quest&&s.kills>=2&&!s.questDone){s.questDone=true;s.stones+=50;s.xp+=30;log("任务完成，获得 50 灵石与 30 修为。")}else log("任务尚未完成，至少击败两只灵兽。");render()};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));["world","character","bag","quests","admin"].forEach(id=>$(id).hidden=id!==b.dataset.tab)});
+$("unlock").onclick=()=>{if($("adminPass").value===s.adminPass){$("adminTools").classList.remove("hidden");log("管理员权限已解锁。")}else log("管理员口令错误。")};
+$("grant").onclick=()=>{s.stones+=Number($("addStones").value||0);s.xp+=Number($("addXp").value||0);render();log("管理员资源修改已应用。")};
+$("heal").onclick=()=>{s.hp=s.maxHp;s.mp=s.maxMp;render();log("生命与灵力已恢复。")};
+$("levelup").onclick=()=>{s.level++;s.maxHp+=12;s.maxMp+=5;s.atk+=2;s.def++;s.hp=s.maxHp;s.mp=s.maxMp;render();log("管理员强制提升境界。")};
+$("rename").onchange=()=>{if($("rename").value.trim()){s.name=$("rename").value.trim();render()}};
+$("changePass").onclick=()=>{if($("newPass").value.length>=4){s.adminPass=$("newPass").value;save();log("管理员口令已修改。")}else log("新口令至少需要 4 位。")};
+$("reset").onclick=()=>{if(confirm("确定重置全部游戏进度？")){localStorage.removeItem("xiuxian_save");s=defaultState();render();log("游戏已重置。")}};
+$("export").onclick=()=>{let a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(s)],{type:"application/json"}));a.href=u;a.download="问道长生存档.json";a.click();URL.revokeObjectURL(u)};
+$("import").onclick=()=>{let f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=()=>{let r=new FileReader();r.onload=()=>{try{s={...defaultState(),...JSON.parse(r.result)};render();log("存档导入成功。")}catch(e){log("存档文件无效。")}};r.readAsText(f.files[0])};f.click()};
+document.addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){e.preventDefault();move(e.key==="ArrowLeft"?-1:e.key==="ArrowRight"?1:0,e.key==="ArrowUp"?-1:e.key==="ArrowDown"?1:0)}});
+log("你在青云山麓醒来。仙途漫漫，先熟悉周围环境吧。");render();
+</script></body></html>
